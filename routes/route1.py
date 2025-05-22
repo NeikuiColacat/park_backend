@@ -30,7 +30,7 @@ def set_parklot():
     if old_val == 0 and val == 1:
         mongo.db.orders.update_many(
             {"mac": mac},
-            {"$set": {"status": "unpaid"}}
+            {"$set": {"status": "unpaid"}},
             upsert=True
         )
 
@@ -42,7 +42,7 @@ def set_parklot():
 @bp.route("/free_count", methods=["GET"])
 def free_count():
     count = mongo.db.parklots.count_documents({"val": 0})
-    return jsonify({"free_count": count})
+    return str(count) + "\n"
 
 # ...existing code...
 
@@ -97,33 +97,21 @@ def pay_qr():
     return jsonify({"qr_img": img_b64, "order_id": order_id})
   
 
-# ...existing code...
-
 @bp.route("/can_open_gate", methods=["POST"])
 def can_open_gate():
     data = request.json or {}
     mac = data.get("mac")
     if not mac:
-        return jsonify({"val": 0})
-
+        return "0"
     lot = mongo.db.parklots.find_one({"mac": mac})
     if not lot:
-        return jsonify({"val": 0})
-
-    # 车位为空，允许开启
+        return "0"
     if lot.get("val") == 0:
-        return jsonify({"val": 1})
-
-    # 车位已占用，检查是否有已支付订单
+        return "1"
     order = mongo.db.orders.find_one({"mac": mac, "status": "paid"})
     if order:
-        return jsonify({"val": 1})
-
-    # 其他情况不允许
-    return jsonify({"val": 0})
-
-
-# ...existing code...
+        return "1"
+    return "0"
 
 @bp.route("/alipay_notify", methods=["POST"])
 def alipay_notify():
