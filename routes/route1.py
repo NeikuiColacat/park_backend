@@ -102,10 +102,10 @@ def can_open_gate():
     data = request.json or {}
     mac = data.get("mac")
     if not mac:
-        return "0"
+        return "2"
     lot = mongo.db.parklots.find_one({"mac": mac})
     if not lot:
-        return "0"
+        return "2"
     if lot.get("val") == 0:
         return "1"
     order = mongo.db.orders.find_one({"mac": mac, "status": "paid"})
