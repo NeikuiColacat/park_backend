@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>停车场车位状态</title>
+  <style>
+    body {
+      background: #f5f7fa;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .color-bar {
+      height: 16px;
+      background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+      margin-bottom: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      animation: moveBar 3s linear infinite;
+    }
+    @keyframes moveBar {
+      0% { background-position: 0 0; }
+      100% { background-position: 200px 0; }
+    }
+    h2 {
+      text-align: center;
+      color: #333;
+      margin-top: 12px;
+      margin-bottom: 24px;
+      letter-spacing: 2px;
+    }
+    .lot-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 24px;
+      padding: 0 16px 32px 16px;
+    }
+    .lot-box {
+      width: 200px;
+      height: 150px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 8px 12px 8px;
+      position: relative;
+      transition: transform 0.2s, box-shadow 0.2s;
+      animation: popIn 0.7s cubic-bezier(.68,-0.55,.27,1.55);
+      word-break: break-all;
+    }
+    .lot-box:hover {
+      transform: translateY(-6px) scale(1.04);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+    @keyframes popIn {
+      0% { transform: scale(0.7); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .car-icon {
+      font-size: 38px;
+      margin-bottom: 8px;
+      filter: drop-shadow(0 2px 2px #eee);
+      transition: filter 0.3s;
+    }
+    .lot-id {
+      font-size: 15px;
+      color: #666;
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+      word-break: break-all;
+      text-align: center;
+      max-width: 180px;
+    }
+    .status-lights {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 2px;
+    }
+    .light {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(0,0,0,0.08);
+      border: 2px solid #eee;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+    .light.green {
+      background: radial-gradient(circle at 60% 40%, #7fff7f 60%, #2ecc40 100%);
+      box-shadow: 0 0 8px #7fff7f88;
+    }
+    .light.red {
+      background: radial-gradient(circle at 60% 40%, #ff7f7f 60%, #e74c3c 100%);
+      box-shadow: 0 0 8px #ff7f7f88;
+    }
+    .status-text {
+      font-size: 14px;
+      font-weight: bold;
+      color: #2ecc40;
+      margin-top: 2px;
+      transition: color 0.3s;
+    }
+    .occupied .status-text {
+      color: #e74c3c;
+    }
+    /* 支付弹窗样式 */
+    #pay-area {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(245,247,250,0.96);
+      z-index: 999;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+    #pay-area-inner {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+      padding: 32px 40px 24px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 260px;
+      position: relative;
+    }
+    #pay-qrcode {
+      width: 200px;
+      margin: 16px 0 12px 0;
+      box-shadow: 0 2px 12px #0001;
+      border-radius: 8px;
+      background: #fff;
+    }
+    #pay-info {
+      font-size: 17px;
+      color: #222;
+      margin-top: 6px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+    #pay-close {
+      position: absolute;
+      top: 18px;
+      right: 28px;
+      font-size: 22px;
+      color: #aaa;
+      cursor: pointer;
+      background: none;
+      border: none;
+      transition: color 0.2s;
+    }
+    #pay-close:hover {
+      color: #e74c3c;
+    }
+    /* 响应式 */
+    @media (max-width: 600px) {
+      .lot-box { width: 90px; height: 110px; }
+      .car-icon { font-size: 28px; }
+      .lot-id { font-size: 13px; }
+      #pay-area-inner { padding: 18px 6vw 14px 6vw; min-width: 0; }
+      #pay-qrcode { width: 130px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="color-bar"></div>
+  <h2>停车场车位状态</h2>
+  <div id="lots" class="lot-container"></div>
+
+  <!-- 支付宝二维码区域 -->
+  <div id="pay-area">
+    <div id="pay-area-inner">
+      <button id="pay-close" onclick="closePayArea()">×</button>
+      <h3 style="margin-bottom:10px;">请扫码支付</h3>
+      <img id="pay-qrcode">
+      <div id="pay-info"></div>
+    </div>
+  </div>
+
+  <script>
+    function renderLots(lots) {
+      let html = '';
+      lots.forEach(lot => {
+        const occupied = lot.val === 1;
+        html += `
+          <div class="lot-box${occupied ? ' occupied' : ''}">
+            <div class="car-icon" style="filter:${occupied ? 'grayscale(0%)' : 'grayscale(70%)'}">🚗</div>
+            <div class="lot-id">编号: ${lot.mac}</div>
+            <div class="status-lights">
+              <div class="light ${occupied ? 'red' : 'green'}"></div>
+              <div class="light ${occupied ? 'green' : 'red'}" style="opacity:0.3"></div>
+            </div>
+            <div class="status-text">${occupied ? '已占用' : '空闲'}</div>
+            <button onclick="startPay('${lot.mac}', 5)">支付停车费</button>
+          </div>
+        `;
+      });
+      document.getElementById('lots').innerHTML = html;
+    }
+
+    function fetchLots() {
+      fetch('/get_parklots')
+        .then(res => res.json())
+        .then(data => renderLots(data));
+    }
+    fetchLots();
+    setInterval(fetchLots, 10000); // 每2秒刷新一次
+
+    // 支付宝二维码相关代码
+    function showPayQr(img_b64, fee) {
+      document.getElementById('pay-area').style.display = 'flex';
+      document.getElementById('pay-qrcode').src = 'data:image/png;base64,' + img_b64;
+      document.getElementById('pay-info').innerText = `应付：${fee}元`;
+    }
+
+    function closePayArea() {
+      document.getElementById('pay-area').style.display = 'none';
+    }
+
+    function startPay(mac, fee) {
+      fetch('/pay_qr', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({mac: mac, fee: fee})
+      })
+      .then(res => res.json())
+      .then(data => showPayQr(data.qr_img, fee));
+    }
+  </script>
+</body>
+</html>
