@@ -1,0 +1,53 @@
+from flask import Blueprint, request, jsonify
+from models.db import mongo
+from bson import ObjectId
+import bcrypt
+
+bp = Blueprint("user", __name__)
+
+@bp.route("/register", methods=["POST"])
+def register():
+    data = request.json or {}
+    username = data.get("username")
+    password = data.get("password")
+    device_id = data.get("device_id")
+    role = data.get("role")
+
+    if not all([username, password, device_id]):
+        return jsonify({"error": "Missing parameters"}), 400
+
+    if mongo.db.users.find_one({"username": username}):
+        print("dulpicated !!! ")
+        return jsonify({"error": "User already exists"}), 400
+
+    hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+    mongo.db.users.insert_one({
+        "username": username,
+        "password": hashed,
+        "device_id": device_id,
+        "role" : role,
+        "profile": {},
+    })
+
+    print("reg sueccess !!!!!")
+    return jsonify({
+        "message": "Registered successfully",
+    }), 201
+
+@bp.route("/login", methods=["POST"])
+def login():
+    data = request.json or {}
+    username = data.get("username")
+    password = data.get("password")
+    if not all([username, password]):
+        return jsonify({"error": "Missing parameters"}), 400
+
+    user = mongo.db.users.find_one({"username": username})
+    role = user["role"]
+    if user and bcrypt.checkpw(password.encode("utf-8"), user["password"]):
+        return jsonify({
+            "role": role,
+        }), 200
+
+    return jsonify({"error": "Invalid credentials"}), 401
+

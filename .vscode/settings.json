@@ -1,0 +1,11 @@
+{
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": [
+      "."           // pytest 会从根目录搜集 test_*.py
+    ],
+    "remote.extensionKind": {
+        "GitHub.copilot": ["ui"],
+        "GitHub.copilot-chat": ["ui"],
+    }
+}
