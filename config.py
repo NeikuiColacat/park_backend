@@ -1,2 +1,2 @@
 MONGO_URI = "mongodb://localhost:27017"
-DB_NAME = "wearable_db"
+DB_NAME = "park_db"
